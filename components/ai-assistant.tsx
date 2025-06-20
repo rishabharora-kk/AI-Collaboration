@@ -3,12 +3,25 @@
 import type React from "react"
 
 import { useChat } from "ai/react"
-import { Bot, Send, Sparkles, Zap, Lightbulb, CheckCircle, Edit3, FileText, Target, Wand2 } from "lucide-react"
+import {
+  Bot,
+  Send,
+  Sparkles,
+  Zap,
+  Lightbulb,
+  CheckCircle,
+  Edit3,
+  FileText,
+  Target,
+  Wand2,
+  AlertCircle,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface AIAssistantProps {
   documentId: string
@@ -34,17 +47,18 @@ export function AIAssistant({ documentId, content }: AIAssistantProps) {
   ]
 
   const handleSuggestionClick = (suggestion: string) => {
+    // Create a synthetic event
     const syntheticEvent = {
       preventDefault: () => {},
     } as React.FormEvent<HTMLFormElement>
 
-    // Set the input value and submit
-    const inputElement = document.querySelector('input[placeholder="Ask AI for help..."]') as HTMLInputElement
-    if (inputElement) {
-      inputElement.value = suggestion
-      handleInputChange({ target: { value: suggestion } } as React.ChangeEvent<HTMLInputElement>)
-      setTimeout(() => handleSubmit(syntheticEvent), 100)
-    }
+    // Update input and submit
+    handleInputChange({ target: { value: suggestion } } as React.ChangeEvent<HTMLInputElement>)
+
+    // Submit after a brief delay to ensure state is updated
+    setTimeout(() => {
+      handleSubmit(syntheticEvent)
+    }, 50)
   }
 
   return (
@@ -69,7 +83,7 @@ export function AIAssistant({ documentId, content }: AIAssistantProps) {
 
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.length === 0 && (
+          {messages.length === 0 && !error && (
             <div className="space-y-4">
               <Card className="border-dashed">
                 <CardHeader className="pb-3">
@@ -88,6 +102,7 @@ export function AIAssistant({ documentId, content }: AIAssistantProps) {
                         size="sm"
                         className="w-full justify-start text-left h-auto p-3 hover:bg-muted/50"
                         onClick={() => handleSuggestionClick(suggestion.text)}
+                        disabled={isLoading}
                       >
                         <Icon className="h-4 w-4 mr-3 text-muted-foreground" />
                         {suggestion.text}
@@ -107,6 +122,15 @@ export function AIAssistant({ documentId, content }: AIAssistantProps) {
                 </p>
               </div>
             </div>
+          )}
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                AI service is temporarily unavailable. Please check your API key configuration or try again later.
+              </AlertDescription>
+            </Alert>
           )}
 
           {messages.map((message) => (
@@ -147,14 +171,6 @@ export function AIAssistant({ documentId, content }: AIAssistantProps) {
                     ></div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex justify-start">
-              <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
-                AI is temporarily unavailable. Please try again.
               </div>
             </div>
           )}

@@ -14,8 +14,8 @@ export async function POST(req: Request) {
 
     const { messages, documentContent } = await req.json()
 
-    // Get the last user message
-    const lastMessage = messages[messages.length - 1]?.content || ""
+    // Get the user's message
+    const userMessage = messages[messages.length - 1]?.content || ""
 
     const systemPrompt = `You are an AI writing assistant helping with collaborative document editing. 
 
@@ -32,11 +32,9 @@ You can help with:
 Be concise, helpful, and professional in your responses. Focus on actionable advice.`
 
     const result = streamText({
-      model: google("gemini-1.5-flash", {
-        apiKey: process.env.GOOGLE_GEMINI_API_KEY,
-      }),
+      model: google("gemini-1.5-flash"),
       system: systemPrompt,
-      messages: [{ role: "user", content: lastMessage }],
+      messages: [{ role: "user", content: userMessage }],
       maxTokens: 500,
     })
 
@@ -44,15 +42,14 @@ Be concise, helpful, and professional in your responses. Focus on actionable adv
   } catch (error) {
     console.error("AI API Error:", error)
 
-    // Return a fallback response
+    // Return a structured error response that the frontend can handle
     return new Response(
       JSON.stringify({
-        error: "AI service temporarily unavailable",
-        fallback:
-          "I'm here to help with your writing! Try asking me to improve your content, check grammar, or suggest better structure.",
+        type: "error",
+        message: "AI service temporarily unavailable. Please try again later.",
       }),
       {
-        status: 200,
+        status: 500,
         headers: { "Content-Type": "application/json" },
       },
     )
